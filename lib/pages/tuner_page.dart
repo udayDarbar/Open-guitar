@@ -17,11 +17,10 @@ class _TunerPageState extends State<TunerPage> {
   StreamSubscription<List<double>>? _audioSub;
 
   String _note = '--';
-  int _adjustLevel = 0; // -4 to +4
+  int _adjustLevel = 0; // from -4 to +4
 
-  // Open string full names and display labels
-  static const List<String> _openStrings = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'];
-  static const List<String> _stringNames = ['E', 'A', 'D', 'G', 'B', 'E'];
+  // Standard tuning MIDI note names
+  static const List<String> _openStrings = ['D2', 'A2', 'E3', 'G3', 'B3', 'E4'];
 
   @override
   void initState() {
@@ -80,78 +79,99 @@ class _TunerPageState extends State<TunerPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine selected string by matching full note
-    final selectedIndex = _openStrings.indexOf(_note);
-
-    // Color based on how far (+/-4)
+    // Color based on tuning offset
     final accentColor = (_adjustLevel == 0)
         ? Colors.green
         : (_adjustLevel.abs() <= 2)
             ? Colors.orange
             : Colors.red;
 
-    // Text to display: +N or -N
-    final adjustText = selectedIndex >= 0
-        ? (_adjustLevel > 0 ? '+$_adjustLevel' : '$_adjustLevel')
-        : '';
-
     return Scaffold(
       appBar: AppBar(title: Text('Tuner')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Display current note subtly
-            if (selectedIndex >= 0)
-              Text(
-                'Note: $_note',
-                style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
-              ),
-            SizedBox(height: 12),
+      body: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Pitch line
+          CustomPaint(
+            painter: PitchLinePainter(_adjustLevel),
+            child: Container(width: 60, height: 300),
+          ),
 
-            // Bars and controls
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(6, (i) {
-                final isSelected = i == selectedIndex;
-                return Expanded(
-                  child: Column(
-                    children: [
-                      // Plus/minus text
-                      Text(
-                        isSelected ? adjustText : '',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? accentColor : Colors.transparent,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      // String bar
-                      Container(
-                        width: isSelected ? 6 : 3,
-                        height: 200,
-                        color: isSelected ? accentColor : Colors.grey.shade300,
-                      ),
-                      SizedBox(height: 8),
-                      // String label
-                      Text(
-                        _stringNames[i],
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          color: isSelected ? accentColor : Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
+          // Tuning offset and note
+          Positioned(
+            top: 100,
+            child: Column(
+              children: [
+                if (_note != '--') ...[
+                  Text(
+                    _adjustLevel > 0 ? '+$_adjustLevel' : '$_adjustLevel',
+                    style: TextStyle(fontSize: 32, color: accentColor),
                   ),
-                );
-              }),
+                  Icon(Icons.arrow_drop_down, size: 32, color: accentColor),
+                  Text(
+                    _note,
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.lightBlueAccent,
+                      shadows: [Shadow(blurRadius: 2, color: Colors.black26, offset: Offset(1, 1))],
+                    ),
+                  ),
+                ]
+              ],
             ),
+          ),
 
-            SizedBox(height: 24),
-            ElevatedButton(
+          // Headstock + tuning buttons
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Image.asset(
+                  'assets/headstock.png',
+                  height: MediaQuery.of(context).size.height * 0.75,
+                  fit: BoxFit.contain,
+                  gaplessPlayback: true,
+                ),
+
+                // Left side: E2, A2, D3
+                Positioned(
+                  left: 20,
+                  top: 120,
+                  child: Column(
+                    children: List.generate(3, (i) {
+                      final noteLabel = _openStrings[i];
+                      return TunerButton(
+                        label: noteLabel.substring(0, 1),
+                        selected: _note == noteLabel,
+                      );
+                    }),
+                  ),
+                ),
+
+                // Right side: G3, B3, E4
+                Positioned(
+                  right: 20,
+                  top: 120,
+                  child: Column(
+                    children: List.generate(3, (i) {
+                      final noteLabel = _openStrings[i + 3];
+                      return TunerButton(
+                        label: noteLabel.substring(0, 1),
+                        selected: _note == noteLabel,
+                      );
+                    }),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Start/Stop button
+          Positioned(
+            bottom: 20,
+            child: ElevatedButton(
               onPressed: () {
                 if (_audioSub == null) {
                   _startTuner();
@@ -166,7 +186,55 @@ class _TunerPageState extends State<TunerPage> {
               },
               child: Text(_audioSub == null ? 'Start Tuning' : 'Stop Tuning'),
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class PitchLinePainter extends CustomPainter {
+  final int level;
+  PitchLinePainter(this.level);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = level == 0 ? Colors.green : Colors.grey
+      ..strokeWidth = 3;
+
+    final centerX = size.width / 2;
+    canvas.drawLine(Offset(centerX, 0), Offset(centerX, size.height), paint);
+  }
+
+  @override
+  bool shouldRepaint(PitchLinePainter old) => old.level != level;
+}
+
+class TunerButton extends StatelessWidget {
+  final String label;
+  final bool selected;
+
+  const TunerButton({required this.label, this.selected = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: selected ? Colors.lightBlueAccent : Colors.grey.shade400,
+          width: selected ? 3.0 : 1.0,
+        ),
+      ),
+      padding: EdgeInsets.all(12),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: selected ? Colors.lightBlueAccent : Colors.grey.shade600,
         ),
       ),
     );
