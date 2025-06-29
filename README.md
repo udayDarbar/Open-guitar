@@ -1,16 +1,48 @@
-# openg
+# Open Guitar – Open-Source Guitar Learning App
 
-A new Flutter project.
+Open Guitar is a free, open-source Flutter application designed for beginner guitarists who are tired of subscription-only tools. It aims to be your all-in-one practice companion by combining:
 
-## Getting Started
+- **Guitar Tuner**  
+  Quickly and accurately tune each string.
 
-This project is a starting point for a Flutter application.
+- **Chord Recognition**  
+  Play a chord—Open Guitar listens in real time and tells you which chord you’re playing.
 
-A few resources to get you started if this is your first Flutter project:
+- **Diagram Library**  
+  Browse clear, interactive chord diagrams for every basic guitar chord.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- **Practice Mode**  
+  Track your tuning and chord-playing accuracy over time.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+This project is 100% open source to help new learners get started without barriers. Contributions are welcome—whether you want to suggest new features, report bugs, or improve existing code.
+
+---
+
+## Features
+
+1. **Tuner**  
+   - Real-time pitch detection  
+   - Visual feedback to match each string’s target frequency
+
+2. **Chord Detector**  
+   - Auto-recognition of common chords (e.g. C, D, G, Em)  
+   - Instant on-screen confirmation
+
+3. **Chord Library**  
+   - High-quality diagrams for major, minor, and seventh chords  
+   - Swipe or search to find any chord
+
+4. **Practice Tracker**  
+   - Record your tuning sessions  
+   - Review past practice logs and see progress
+
+---
+
+## Tech Stack
+
+- **Flutter** (Dart) for cross-platform mobile UI  
+- **Audio Analysis** via FFT-based pitch detection  
+- **Charts & Animations** for feedback and progress
+
+---
+
